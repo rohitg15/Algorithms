@@ -1,5 +1,5 @@
 CC = g++
 CFLAGS = -g -o
 
-shortest_path.o : shortest_path.cpp
-	$(CC) $(CFLAGS) shortest_path shortest_path.cpp
+Dijkstras.o : Dijkstras.cpp
+	$(CC) $(CFLAGS) Dijkstras Dijkstras.cpp
