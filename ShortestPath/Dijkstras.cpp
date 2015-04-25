@@ -1,142 +1,148 @@
+#include<iostream>
 #include<stdio.h>
 #include<vector>
-#include<set>
-#include<limits.h>
-#include<fcntl.h>
+#include<algorithm>
 #include<stdlib.h>
+#include<set>
+#include<climits>
 
 using namespace std;
 
 
-typedef pair<int,int> pii;
-typedef vector<pii> vpi;
-typedef vector<vpi> vvpi;
+#define FOR(i,x,n) for(int i=x;i<n;i++)
+
+typedef pair<int,int> PAIR;
+typedef vector<PAIR> vp;
+typedef vector<vector<PAIR> > vvp;
 typedef vector<int> vi;
 
-#define FOR(i,x,n) for(int i=x;i<n;i++)
-#define init_source(source,d) { d[source] = 0; }
-/*
-  function to print the graph
- */
-void print_graph(vvpi &g)
+
+// this is the graph represented as an adjacency list
+vvp g;
+
+// this is the distamce vector denoting the distance of each node
+vi d;
+
+// this is the priority queue data structure
+set<PAIR> q;
+
+
+void print_graph(int n)
 {
-  FOR(i,0,g.size())
+  FOR(i,0,n)
     {
+      printf("%d -> ",i);
       FOR(j,0,g[i].size())
 	{
-	  printf("%d -> %d : [ %d ] \n",i,g[i][j].first,g[i][j].second);
+	  printf("(%dw,%d) ",g[i][j].first,g[i][j].second);
 	}
-      
+      printf("\n");
     }
 }
 
 
-/*
-  computing shortest path in a graph using Dijkstra's Algorithm
-  assuming node 0 as the root
- */
-void compute_shortest_path(vvpi &g,vi &d,int source)
+void print_shortest_distances(int n)
 {
-  // create a priority queue
-  set<pii> q;
-
-  /* initialize priority queue and minimum distance array
-     first entry stores the distance of node i and second entry stores
-   node i
-  */
-  q.insert(pii(d[source],source));
-  
-
-  while(!q.empty())
+  FOR(i,0,n)
     {
-      // extract min from priority queue
-      pii min_node_pair = *q.begin();
-      int min_node = min_node_pair.second;
-      int w = min_node_pair.first;
-      q.erase(q.begin());
-      // iterate over all nodes adjacent to min_node
-      FOR(i,0,g[min_node].size())
-	{
-
-	  pii p = g[min_node][i];
-	  if (d[p.first] > w + p.second)
-	    {
-	      /*
-		this node was already inserted into the priority queue
-		so we remove it
-	       */
-	      if (d[p.first] != INT_MAX)
-		{
-		  set<pii>::iterator it = q.find(p);
-		  if (it != q.end())
-		    {
-		      q.erase(q.find(p));
-		    }
-		  
-		}
-	      d[p.first] = d[min_node] + p.second;
-	      q.insert(pii(d[p.first],p.first));
-	    }
-	}
+      printf("(%d -> %d) ",i,d[i]);
     }
-  
 }
 
 
+void initialize(int n,int src)
+{
+  
+  g.resize(n);
+  d.resize(n);
+  FOR(i,1,n)
+    d[i] = INT_MAX; 
+  d[src] = 0;
+	 
 
+  /*
+    q is the set datastructure in C++ which behaves pretty much like a priority queue for our purpose
+    we insert a pair representing the weight and the corresponding node
+    it is initialized with the source node whose initial distance is 0 (src,0)
+   */
+  q.insert(PAIR(d[src],src));
+
+
+}
 
 int main(int argc,char *argv[])
 {
-  if (argc != 3)
-    {
-      fprintf(stderr,"ERROR: use <executable> number_vertices(n)  source_index (o to n)\n");
-      exit(0);
-    }
-  
-  freopen("ip.txt","r",stdin);
-  int n,m, a,b,c, source;
-  n = atoi(argv[1]);
-  source = atoi(argv[2]);
-  scanf("%d",&m);
 
-  if (n >= INT_MAX || source >= INT_MAX || n<= 0 || source < 0)
+  if (argc != 2)
     {
-      fprintf(stderr,"ERROR : number of vertices should be positive and index should be non-negative\n");
-      exit(0);
+      fprintf(stderr,"ERROR: usage %s input_file_name\n",argv[0]);
+      exit(-1);
     }
+  freopen(argv[1],"r",stdin);
+  int n,e,src;
+  scanf("%d%d%d",&n,&e,&src);
   
-  
-  vvpi g;
-  // small memory optimization while using vectors in C++
-  g.resize(n);
-  
-  // array of distances from the source
-  vi d(n,INT_MAX);
-  
-  FOR(i,0,m)
-    {
-      //input source_vertex destination_vertex edge_weight
-      scanf("%d%d%d",&a,&b,&c);
-      // since the graph is undirected we add 2 entries
-      g[a].push_back(pii(b,c));
-      //      g[b].push_back(pii(a,c));
-    }
-  
-  //initialize source values
-  init_source(source,d);
-
-  print_graph(g);
-  printf("\n\n");
-  compute_shortest_path(g,d,source);
-  
-
   /*
-    print the array of distances from the source
+    consume input in the form of an edge list for the graph
+    example - u,v,w => (u,v) -> edge with vertices u and v; w -> weight of the edge
    */
-  FOR(i,0,n)
+
+  
+  printf("initializing data structures\n");
+  initialize(n,src);
+  
+  FOR(i,0,e)
     {
-      printf("%d %d\n",i,d[i]);
+      int u,v,w;
+      scanf("%d%d%d",&u,&v,&w);
+      PAIR p(w,v);
+      g[u].push_back(p);
+
     }
 
+  printf("printing original graph\n\n");
+
+  print_graph(n);
+
+  printf("\ncomputing shortest paths\n");
+  while(!q.empty())
+    {
+      set<PAIR>::iterator it = q.begin();
+      PAIR p = *it;
+      int u,v,w,du;
+
+      du = p.first;
+      u = p.second;
+      
+      q.erase(it);
+      
+      FOR(i,0,g[u].size())
+	{
+	  p = g[u][i];
+	  w = p.first;
+	  v = p.second;
+
+	  if (d[v] > d[u] + w)
+	    {
+	      if (w != INT_MAX)
+		{
+		  it = q.find(p);
+		  if (it != q.end())
+		    {
+		      q.erase(it);
+		    }
+		}
+	        d[v] = d[u] + w;
+	        q.insert(PAIR(d[v],v));
+	    }
+	  
+	}
+
+
+    }
+
+  printf("\n\n printing shortest distances for each vertex (vertex -> shortest_distance)\n\n");
+  print_shortest_distances(n);
+  printf("\n\n");
   return 0;
 }
